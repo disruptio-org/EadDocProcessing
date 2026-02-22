@@ -13,7 +13,7 @@ import structlog
 from app.config import settings
 from app.schemas.common import Evidence, PageText, PipelineMethod, PipelineResult
 from app.services.openai_client import call_openai_structured
-from app.services.po_extraction import extract_po_regex
+from app.services.po_extraction import extract_po_regex, filter_result_by_supplier
 
 logger = structlog.get_logger(__name__)
 
@@ -154,4 +154,4 @@ def run_pipeline_b(
         confidence=llm_result.confidence,
         method=llm_result.method,
     )
-    return llm_result
+    return filter_result_by_supplier(llm_result, pages)

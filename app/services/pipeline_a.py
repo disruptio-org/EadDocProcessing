@@ -12,6 +12,8 @@ import structlog
 from app.schemas.common import Evidence, PageText, PipelineMethod, PipelineResult
 from app.services.openai_client import call_openai_structured
 
+from app.services.po_extraction import filter_result_by_supplier
+
 logger = structlog.get_logger(__name__)
 
 
@@ -95,4 +97,4 @@ def run_pipeline_a(
         po_primary=result.po_primary,
         confidence=result.confidence,
     )
-    return result
+    return filter_result_by_supplier(result, pages)

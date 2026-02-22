@@ -376,3 +376,29 @@ def _get_supplier_min_po_length(full_text_upper: str) -> int:
         if marker in full_text_upper:
             return min_len
     return 0
+
+
+def filter_result_by_supplier(
+    result: PipelineResult,
+    pages_text: list,
+) -> PipelineResult:
+    """Apply supplier-specific minimum PO length filtering to a PipelineResult.
+
+    Call this from any pipeline (A, B, or hybrid) after extraction.
+    pages_text can be list of PageText objects or (page_num, text) tuples.
+    """
+    full_text = " ".join(
+        (p.text if hasattr(p, "text") else p[1]) for p in pages_text
+    ).upper()
+    min_len = _get_supplier_min_po_length(full_text)
+    if min_len <= 0:
+        return result
+
+    def _ok(po: str | None) -> bool:
+        return po is not None and len(po) >= min_len
+
+    filtered_numbers = [po for po in result.po_numbers if _ok(po)]
+    result.po_numbers = filtered_numbers
+    result.po_primary = filtered_numbers[0] if len(filtered_numbers) >= 1 else None
+    result.po_secondary = filtered_numbers[1] if len(filtered_numbers) >= 2 else None
+    return result
