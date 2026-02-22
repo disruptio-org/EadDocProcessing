@@ -28,6 +28,11 @@ PO_EXTRACTION_SCHEMA = {
             "type": ["string", "null"],
             "description": "Secondary/alternative PO number, or null",
         },
+        "po_numbers": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "All PO numbers found in the document (may be more than 2). The first entry should match po_primary, the second po_secondary.",
+        },
         "supplier": {
             "type": ["string", "null"],
             "description": "Supplier/vendor name if identifiable, or null",
@@ -61,6 +66,7 @@ PO_EXTRACTION_SCHEMA = {
     "required": [
         "po_primary",
         "po_secondary",
+        "po_numbers",
         "supplier",
         "confidence",
         "found_keywords",
@@ -167,6 +173,7 @@ def call_openai_structured(
                 return {
                     "po_primary": None,
                     "po_secondary": None,
+                    "po_numbers": [],
                     "supplier": None,
                     "confidence": 0.0,
                     "found_keywords": [],

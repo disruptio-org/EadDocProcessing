@@ -108,18 +108,21 @@ def process_full_flow(
                 supplier_a=result_a.supplier,
                 po_primary_a=result_a.po_primary,
                 po_secondary_a=result_a.po_secondary,
+                po_numbers_a=result_a.po_numbers,
                 confidence_a=result_a.confidence,
                 method_a=result_a.method.value,
                 # Pipeline B
                 supplier_b=result_b.supplier,
                 po_primary_b=result_b.po_primary,
                 po_secondary_b=result_b.po_secondary,
+                po_numbers_b=result_b.po_numbers,
                 confidence_b=result_b.confidence,
                 method_b=result_b.method.value,
                 # Reconciliation
                 match_status=recon.match_status,
                 decided_po_primary=recon.decided_po_primary,
                 decided_po_secondary=recon.decided_po_secondary,
+                decided_po_numbers=recon.decided_po_numbers,
                 status=recon.status,
                 next_action=recon.next_action,
                 reject_reason=recon.reject_reason,
@@ -138,12 +141,14 @@ def process_full_flow(
         storage.save_artifact(source_file_id, "extract_A", [
             {"range": {"start_page": r.page_start, "end_page": r.page_end},
              "po_primary": r.po_primary_a, "po_secondary": r.po_secondary_a,
+             "po_numbers": r.po_numbers_a,
              "confidence": r.confidence_a, "method": r.method_a}
             for r in all_records
         ])
         storage.save_artifact(source_file_id, "extract_B", [
             {"range": {"start_page": r.page_start, "end_page": r.page_end},
              "po_primary": r.po_primary_b, "po_secondary": r.po_secondary_b,
+             "po_numbers": r.po_numbers_b,
              "confidence": r.confidence_b, "method": r.method_b}
             for r in all_records
         ])

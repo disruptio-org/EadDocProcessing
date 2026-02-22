@@ -23,16 +23,19 @@ COLUMNS = [
     ("supplier_A", "supplier_a", 25),
     ("po_primary_A", "po_primary_a", 18),
     ("po_secondary_A", "po_secondary_a", 18),
+    ("po_numbers_A", "po_numbers_a", 18), # Added po_numbers_A
     ("confidence_A", "confidence_a", 14),
     ("method_A", "method_a", 12),
     ("supplier_B", "supplier_b", 25),
     ("po_primary_B", "po_primary_b", 18),
     ("po_secondary_B", "po_secondary_b", 18),
+    ("po_numbers_B", "po_numbers_b", 18), # Added po_numbers_B
     ("confidence_B", "confidence_b", 14),
     ("method_B", "method_b", 12),
     ("match_status", "match_status", 16),
     ("decided_po_primary", "decided_po_primary", 20),
     ("decided_po_secondary", "decided_po_secondary", 20),
+    ("decided_po_numbers", "decided_po_numbers", 20), # Added decided_po_numbers
     ("status", "status", 10),
     ("next_action", "next_action", 18),
     ("reject_reason", "reject_reason", 40),
@@ -72,6 +75,9 @@ def generate_index_excel(
             # Convert enums to their string value
             if hasattr(value, "value"):
                 value = value.value
+            # Convert lists to comma-separated strings for Excel
+            if isinstance(value, list):
+                value = ", ".join(str(v) for v in value) if value else ""
             ws.cell(row=row_idx, column=col_idx, value=value)
 
     # --- Freeze first row ---

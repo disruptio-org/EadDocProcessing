@@ -35,7 +35,7 @@ STRICT RULES:
 3. DO NOT accept numbers that are merely nearby but not clearly associated with a PO keyword.
 4. DO NOT accept document numbers, invoice numbers, or other identifiers that are not POs.
 5. If the evidence is ambiguous or the number could be something other than a PO, return null and set confidence to a low value (< 0.5).
-6. Extract at most 2 PO numbers. The primary should be the one with strongest evidence.
+6. Extract ALL PO numbers you find (there may be more than 2). Populate po_primary with the strongest-evidence PO, po_secondary with the second if present, and po_numbers with the complete list.
 7. Provide evidence snippets showing the keyword and PO together.
 8. Set confidence:
    - 0.9-1.0: PO immediately follows a keyword, no ambiguity
@@ -106,6 +106,7 @@ def run_pipeline_b(
     llm_result = PipelineResult(
         po_primary=raw.get("po_primary"),
         po_secondary=raw.get("po_secondary"),
+        po_numbers=raw.get("po_numbers", []),
         supplier=raw.get("supplier"),
         confidence=float(raw.get("confidence", 0.0)),
         method=PipelineMethod.LLM,
@@ -117,9 +118,14 @@ def run_pipeline_b(
     if regex_result.po_primary and not llm_result.po_primary:
         # Regex found something, LLM didn't → use regex but lower confidence
         logger.info("pipeline_b_hybrid", msg="Using regex result (LLM found nothing)")
+        # Merge po_numbers from both
+        merged_po_numbers = list(dict.fromkeys(
+            regex_result.po_numbers + llm_result.po_numbers
+        ))
         return PipelineResult(
             po_primary=regex_result.po_primary,
             po_secondary=regex_result.po_secondary,
+            po_numbers=merged_po_numbers,
             supplier=llm_result.supplier or regex_result.supplier,
             confidence=min(regex_result.confidence, 0.6),
             method=PipelineMethod.HYBRID,
@@ -137,6 +143,10 @@ def run_pipeline_b(
                 dict.fromkeys(llm_result.found_keywords + regex_result.found_keywords)
             )
             llm_result.evidence = llm_result.evidence + regex_result.evidence
+            # Merge po_numbers from both, LLM first
+            llm_result.po_numbers = list(dict.fromkeys(
+                llm_result.po_numbers + regex_result.po_numbers
+            ))
 
     logger.info(
         "pipeline_b_complete",

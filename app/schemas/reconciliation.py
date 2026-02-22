@@ -33,6 +33,7 @@ class ReconcileDocResult(BaseModel):
     match_status: MatchStatus
     decided_po_primary: Optional[str] = None
     decided_po_secondary: Optional[str] = None
+    decided_po_numbers: list[str] = []
     status: FinalStatus
     next_action: NextAction
     reject_reason: Optional[str] = None

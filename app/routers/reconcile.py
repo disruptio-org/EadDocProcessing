@@ -40,6 +40,7 @@ async def reconcile_po(req: ReconcileRequest):
             match_status=outcome.match_status,
             decided_po_primary=outcome.decided_po_primary,
             decided_po_secondary=outcome.decided_po_secondary,
+            decided_po_numbers=outcome.decided_po_numbers,
             status=outcome.status,
             next_action=outcome.next_action,
             reject_reason=outcome.reject_reason,

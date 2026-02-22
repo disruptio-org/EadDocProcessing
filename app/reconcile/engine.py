@@ -24,6 +24,7 @@ class ReconcileResult:
         match_status: MatchStatus,
         decided_po_primary: str | None,
         decided_po_secondary: str | None,
+        decided_po_numbers: list[str],
         status: FinalStatus,
         next_action: NextAction,
         reject_reason: str | None = None,
@@ -31,6 +32,7 @@ class ReconcileResult:
         self.match_status = match_status
         self.decided_po_primary = decided_po_primary
         self.decided_po_secondary = decided_po_secondary
+        self.decided_po_numbers = decided_po_numbers
         self.status = status
         self.next_action = next_action
         self.reject_reason = reject_reason
@@ -63,6 +65,14 @@ def reconcile(
     a_set = {v for v in [a_primary, a_secondary] if v}
     b_set = {v for v in [b_primary, b_secondary] if v}
 
+    # Build full PO sets from po_numbers lists (richer comparison)
+    a_all_normalized = [normalize_po(p) for p in result_a.po_numbers if normalize_po(p)]
+    b_all_normalized = [normalize_po(p) for p in result_b.po_numbers if normalize_po(p)]
+    if a_all_normalized:
+        a_set = set(a_all_normalized)
+    if b_all_normalized:
+        b_set = set(b_all_normalized)
+
     # Check confidence threshold
     low_confidence = (
         result_a.confidence < min_confidence and result_b.confidence < min_confidence
@@ -84,6 +94,7 @@ def reconcile(
             match_status=MatchStatus.NEEDS_REVIEW,
             decided_po_primary=None,
             decided_po_secondary=None,
+            decided_po_numbers=[],
             status=FinalStatus.NOT_OK,
             next_action=NextAction.SEND_TO_REVIEW,
             reject_reason="Both pipelines returned no PO",
@@ -94,6 +105,9 @@ def reconcile(
         source = result_a if a_set else result_b
         decided_primary = normalize_po(source.po_primary)
         decided_secondary = normalize_po(source.po_secondary)
+        source_po_numbers = source.po_numbers if source.po_numbers else [
+            p for p in [source.po_primary, source.po_secondary] if p
+        ]
 
         # If confidence is high enough, might be OK
         if source.confidence >= min_confidence:
@@ -101,6 +115,7 @@ def reconcile(
                 match_status=MatchStatus.NEEDS_REVIEW,
                 decided_po_primary=source.po_primary,  # keep original format
                 decided_po_secondary=source.po_secondary,
+                decided_po_numbers=source_po_numbers,
                 status=FinalStatus.NOT_OK,
                 next_action=NextAction.SEND_TO_REVIEW,
                 reject_reason="Only one pipeline found PO",
@@ -110,6 +125,7 @@ def reconcile(
                 match_status=MatchStatus.NEEDS_REVIEW,
                 decided_po_primary=source.po_primary,
                 decided_po_secondary=source.po_secondary,
+                decided_po_numbers=source_po_numbers,
                 status=FinalStatus.NOT_OK,
                 next_action=NextAction.SEND_TO_REVIEW,
                 reject_reason="Only one pipeline found PO with low confidence",
@@ -136,6 +152,9 @@ def reconcile(
                 match_status=MatchStatus.NEEDS_REVIEW,
                 decided_po_primary=result_a.po_primary,
                 decided_po_secondary=result_a.po_secondary or result_b.po_secondary,
+                decided_po_numbers=list(dict.fromkeys(
+                    result_a.po_numbers + result_b.po_numbers
+                )),
                 status=FinalStatus.NOT_OK,
                 next_action=NextAction.SEND_TO_REVIEW,
                 reject_reason="POs match but both have low confidence",
@@ -155,10 +174,19 @@ def reconcile(
         decided_primary = all_pos[0] if all_pos else None
         decided_secondary = all_pos[1] if len(all_pos) > 1 else None
 
+        # Build full decided_po_numbers from both pipelines
+        decided_po_numbers = list(dict.fromkeys(
+            result_a.po_numbers + result_b.po_numbers
+        ))
+        # If po_numbers were empty, fall back to all_pos
+        if not decided_po_numbers:
+            decided_po_numbers = all_pos
+
         return ReconcileResult(
             match_status=MatchStatus.MATCH_OK,
             decided_po_primary=decided_primary,
             decided_po_secondary=decided_secondary,
+            decided_po_numbers=decided_po_numbers,
             status=FinalStatus.OK,
             next_action=NextAction.AUTO_OK,
         )
@@ -168,11 +196,17 @@ def reconcile(
         # Still OK but with review recommendation
         decided_primary = result_a.po_primary or result_b.po_primary
         decided_secondary = result_a.po_secondary or result_b.po_secondary
+        decided_po_numbers = list(dict.fromkeys(
+            result_a.po_numbers + result_b.po_numbers
+        ))
+        if not decided_po_numbers:
+            decided_po_numbers = [p for p in [decided_primary, decided_secondary] if p]
 
         return ReconcileResult(
             match_status=MatchStatus.MATCH_OK,
             decided_po_primary=decided_primary,
             decided_po_secondary=decided_secondary,
+            decided_po_numbers=decided_po_numbers,
             status=FinalStatus.OK,
             next_action=NextAction.AUTO_OK,
         )
@@ -183,6 +217,7 @@ def reconcile(
             match_status=MatchStatus.MISMATCH,
             decided_po_primary=None,
             decided_po_secondary=None,
+            decided_po_numbers=[],
             status=FinalStatus.NOT_OK,
             next_action=NextAction.SEND_TO_REVIEW,
             reject_reason=f"Pipeline A={result_a.po_primary}, Pipeline B={result_b.po_primary}: no match",

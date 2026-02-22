@@ -62,11 +62,14 @@ class TestPOPatterns:
     def test_pattern_2_prefix_6_digits(self):
         assert "212345" in match_po_patterns("V/REF 212345 ok")   # 2 + 5
 
-    # Extraction limits
-    def test_max_two_pos(self):
+    # Multi-PO: now supports more than 2 POs per document
+    def test_multi_po_extraction(self):
         text = "PO 50001111 and 50002222 and 50003333"
         result = match_po_patterns(text)
-        assert len(result) <= 2
+        assert len(result) == 3
+        assert "50001111" in result
+        assert "50002222" in result
+        assert "50003333" in result
 
     # Deduplication
     def test_deduplication(self):

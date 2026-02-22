@@ -241,8 +241,8 @@ def match_po_patterns(text: str) -> list[str]:
                 if len(candidates) >= 10:  # gather more, then trim
                     break
 
-    # Deduplicate and return at most 2
-    return candidates[:2]
+    # Deduplicate and return all candidates (up to 10)
+    return candidates
 
 
 def extract_po_near_keywords(
@@ -291,7 +291,7 @@ def extract_po_near_keywords(
     # Deduplicate keyword names
     kw_names = list(dict.fromkeys(kw_names))
 
-    return all_pos[:2], kw_names, evidence
+    return all_pos, kw_names, evidence
 
 
 def extract_po_regex(
@@ -321,7 +321,6 @@ def extract_po_regex(
 
     # Deduplicate
     all_keywords = list(dict.fromkeys(all_keywords))
-    all_pos = all_pos[:2]
 
     # Confidence heuristic
     if len(all_pos) >= 1 and len(all_keywords) >= 1:
@@ -334,6 +333,7 @@ def extract_po_regex(
     return PipelineResult(
         po_primary=all_pos[0] if len(all_pos) >= 1 else None,
         po_secondary=all_pos[1] if len(all_pos) >= 2 else None,
+        po_numbers=list(all_pos),
         supplier=None,
         confidence=confidence,
         method=PipelineMethod.REGEX,

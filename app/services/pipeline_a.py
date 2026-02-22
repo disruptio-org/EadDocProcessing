@@ -30,7 +30,7 @@ RULES:
    - 8 digits starting with 5, 8, 2, or 0 (e.g. 50001234, 80001234, 20001234, 00001234)
    - 4-8 digits starting with 4 (e.g. 41234, 412345678)
    - 5-6 digits starting with 2 (e.g. 21234, 212345)
-4. Extract at most 2 PO numbers (primary and secondary). The primary should be the most prominent or first-found PO.
+4. Extract ALL PO numbers you find (there may be more than 2). Populate po_primary with the most prominent/first PO, po_secondary with the second if present, and po_numbers with the complete list of all POs found.
 5. Also try to identify the supplier/vendor name from the document header or signature area.
 6. Provide evidence: for each PO found, include the page number (0-based) and a short text snippet showing the PO in context.
 7. Set confidence between 0.0 and 1.0:
@@ -82,6 +82,7 @@ def run_pipeline_a(
     result = PipelineResult(
         po_primary=raw.get("po_primary"),
         po_secondary=raw.get("po_secondary"),
+        po_numbers=raw.get("po_numbers", []),
         supplier=raw.get("supplier"),
         confidence=float(raw.get("confidence", 0.0)),
         method=PipelineMethod.LLM,

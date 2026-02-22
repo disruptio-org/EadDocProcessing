@@ -269,7 +269,7 @@
                 // Pipeline A may fail if no API key — continue with null
                 pipeADocs = ranges.map(r => ({
                     range: r,
-                    result: { po_primary: null, po_secondary: null, supplier: null, confidence: 0, method: 'LLM', found_keywords: [], evidence: [] }
+                    result: { po_primary: null, po_secondary: null, po_numbers: [], supplier: null, confidence: 0, method: 'LLM', found_keywords: [], evidence: [] }
                 }));
                 setStageStatus('pipeline_a', 'done', 'Sem API key — ignorado');
             }
@@ -282,7 +282,7 @@
 
             // Step 5: Reconciliation
             setStageStatus('reconciling', 'active');
-            const emptyResult = (method) => ({ po_primary: null, po_secondary: null, supplier: null, confidence: 0, method, found_keywords: [], evidence: [] });
+            const emptyResult = (method) => ({ po_primary: null, po_secondary: null, po_numbers: [], supplier: null, confidence: 0, method, found_keywords: [], evidence: [] });
             const reconDocs = ranges.map((r, i) => ({
                 range: r,
                 result_a: pipeADocs[i] ? pipeADocs[i].result : emptyResult('LLM'),
@@ -296,8 +296,11 @@
                 match_status: d.match_status,
                 decided_po: d.decided_po_primary || null,
                 decided_po_secondary: d.decided_po_secondary || null,
+                decided_po_numbers: d.decided_po_numbers || [],
                 pipeline_a_po: d.result_a ? d.result_a.po_primary : null,
                 pipeline_b_po: d.result_b ? d.result_b.po_primary : null,
+                pipeline_a_po_numbers: d.result_a ? (d.result_a.po_numbers || []) : [],
+                pipeline_b_po_numbers: d.result_b ? (d.result_b.po_numbers || []) : [],
                 confidence_a: d.result_a ? d.result_a.confidence : null,
                 confidence_b: d.result_b ? d.result_b.confidence : null,
                 final_status: d.status,
@@ -328,16 +331,19 @@
                     supplier_a: d.result_a ? d.result_a.supplier : null,
                     po_primary_a: d.result_a ? d.result_a.po_primary : null,
                     po_secondary_a: d.result_a ? d.result_a.po_secondary : null,
+                    po_numbers_a: d.result_a ? (d.result_a.po_numbers || []) : [],
                     confidence_a: d.result_a ? d.result_a.confidence : 0,
                     method_a: d.result_a ? d.result_a.method : null,
                     supplier_b: d.result_b ? d.result_b.supplier : null,
                     po_primary_b: d.result_b ? d.result_b.po_primary : null,
                     po_secondary_b: d.result_b ? d.result_b.po_secondary : null,
+                    po_numbers_b: d.result_b ? (d.result_b.po_numbers || []) : [],
                     confidence_b: d.result_b ? d.result_b.confidence : 0,
                     method_b: d.result_b ? d.result_b.method : null,
                     match_status: d.match_status,
                     decided_po_primary: d.decided_po_primary,
                     decided_po_secondary: d.decided_po_secondary,
+                    decided_po_numbers: d.decided_po_numbers || [],
                     status: d.status,
                     next_action: d.next_action,
                     reject_reason: d.reject_reason,
@@ -421,13 +427,22 @@
         filtered.forEach((doc, idx) => {
             const row = document.createElement('tr');
             const docShort = doc.doc_id ? doc.doc_id.split('_').pop() : '—';
+            const poDisplay = (doc.decided_po_numbers && doc.decided_po_numbers.length > 0)
+                ? doc.decided_po_numbers.join(', ')
+                : (doc.decided_po || '—');
+            const pipeAPoDisplay = (doc.pipeline_a_po_numbers && doc.pipeline_a_po_numbers.length > 0)
+                ? doc.pipeline_a_po_numbers.join(', ')
+                : (doc.pipeline_a_po || '—');
+            const pipeBPoDisplay = (doc.pipeline_b_po_numbers && doc.pipeline_b_po_numbers.length > 0)
+                ? doc.pipeline_b_po_numbers.join(', ')
+                : (doc.pipeline_b_po || '—');
             row.innerHTML = `
         <td class="mono">${idx + 1}</td>
         <td class="mono" title="${doc.doc_id || ''}">${docShort}</td>
         <td>${doc.range ? `${doc.range.start_page}–${doc.range.end_page}` : '—'}</td>
-        <td class="mono"><strong>${doc.decided_po || '—'}</strong></td>
-        <td class="mono">${doc.pipeline_a_po || '—'}</td>
-        <td class="mono">${doc.pipeline_b_po || '—'}</td>
+        <td class="mono"><strong>${poDisplay}</strong></td>
+        <td class="mono">${pipeAPoDisplay}</td>
+        <td class="mono">${pipeBPoDisplay}</td>
         <td class="num">${doc.confidence_a != null ? (doc.confidence_a * 100).toFixed(0) + '%' : '—'}</td>
         <td class="num">${doc.confidence_b != null ? (doc.confidence_b * 100).toFixed(0) + '%' : '—'}</td>
         <td>${matchBadge(doc.match_status)}</td>
@@ -540,6 +555,7 @@
       <div class="pipeline-col-title">Pipeline A — LLM</div>
       ${pipelineField('PO', pipelineAData.po_primary)}
       ${pipelineField('PO Secundário', pipelineAData.po_secondary)}
+      ${pipelineField('Todos os POs', pipelineAData.po_numbers && pipelineAData.po_numbers.length ? pipelineAData.po_numbers.join(', ') : null)}
       ${pipelineField('Confiança', pipelineAData.confidence != null ? (pipelineAData.confidence * 100).toFixed(0) + '%' : null)}
       ${pipelineField('Método', pipelineAData.method)}
       ${pipelineField('Keywords', pipelineAData.found_keywords ? pipelineAData.found_keywords.join(', ') : null)}
@@ -552,6 +568,7 @@
       <div class="pipeline-col-title">Pipeline B — Regex</div>
       ${pipelineField('PO', pipelineBData.po_primary)}
       ${pipelineField('PO Secundário', pipelineBData.po_secondary)}
+      ${pipelineField('Todos os POs', pipelineBData.po_numbers && pipelineBData.po_numbers.length ? pipelineBData.po_numbers.join(', ') : null)}
       ${pipelineField('Confiança', pipelineBData.confidence != null ? (pipelineBData.confidence * 100).toFixed(0) + '%' : null)}
       ${pipelineField('Método', pipelineBData.method)}
       ${pipelineField('Keywords', pipelineBData.found_keywords ? pipelineBData.found_keywords.join(', ') : null)}

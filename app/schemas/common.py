@@ -63,6 +63,7 @@ class PipelineResult(BaseModel):
     """Normalised result from a single extraction pipeline (A or B)."""
     po_primary: Optional[str] = Field(None, description="Primary PO number")
     po_secondary: Optional[str] = Field(None, description="Secondary PO number (optional)")
+    po_numbers: list[str] = Field(default_factory=list, description="All PO numbers found (may be >2)")
     supplier: Optional[str] = Field(None, description="Supplier name if detected")
     confidence: float = Field(0.0, ge=0.0, le=1.0, description="Confidence score")
     method: PipelineMethod = Field(..., description="Method used for extraction")
@@ -86,18 +87,21 @@ class DocumentRecord(BaseModel):
     supplier_a: Optional[str] = None
     po_primary_a: Optional[str] = None
     po_secondary_a: Optional[str] = None
+    po_numbers_a: list[str] = Field(default_factory=list)
     confidence_a: float = 0.0
     method_a: Optional[str] = None
     # Pipeline B results
     supplier_b: Optional[str] = None
     po_primary_b: Optional[str] = None
     po_secondary_b: Optional[str] = None
+    po_numbers_b: list[str] = Field(default_factory=list)
     confidence_b: float = 0.0
     method_b: Optional[str] = None
     # Reconciliation
     match_status: Optional[MatchStatus] = None
     decided_po_primary: Optional[str] = None
     decided_po_secondary: Optional[str] = None
+    decided_po_numbers: list[str] = Field(default_factory=list)
     status: Optional[FinalStatus] = None
     next_action: Optional[NextAction] = None
     reject_reason: Optional[str] = None
