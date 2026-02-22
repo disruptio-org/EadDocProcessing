@@ -132,12 +132,22 @@ def reconcile(
             )
 
     # Case 3: both have values — check for match
-    # Check primary PO equivalence
-    primary_match = are_equivalent(
-        result_a.po_primary, result_b.po_primary, allow_leading_zero
-    )
+    # Normalize both full sets for comparison
+    a_norm_set = {normalize_po(p) for p in a_set}
+    b_norm_set = {normalize_po(p) for p in b_set}
 
-    # Check set intersection (broader match)
+    # Also check with leading-zero equivalence
+    sets_equal = a_norm_set == b_norm_set
+    if not sets_equal and allow_leading_zero:
+        # Try pairwise equivalence: every item in A has an equivalent in B and vice versa
+        def _all_matched(src: set, tgt: set) -> bool:
+            for s in src:
+                if not any(are_equivalent(s, t, True) for t in tgt):
+                    return False
+            return True
+        sets_equal = _all_matched(a_norm_set, b_norm_set) and _all_matched(b_norm_set, a_norm_set)
+
+    # Check set intersection (for partial overlap)
     set_intersects = False
     for a_val in a_set:
         for b_val in b_set:
@@ -145,8 +155,8 @@ def reconcile(
                 set_intersects = True
                 break
 
-    if primary_match or (set_intersects and (len(a_set) == 1 and len(b_set) == 1)):
-        # MATCH_OK
+    if sets_equal:
+        # FULL MATCH — both pipelines agree 100% on all PO numbers
         if low_confidence:
             return ReconcileResult(
                 match_status=MatchStatus.NEEDS_REVIEW,
@@ -161,10 +171,6 @@ def reconcile(
             )
 
         # Pick the decided POs (prefer A's primary since it matched)
-        decided_primary = result_a.po_primary
-        decided_secondary = None
-
-        # Collect unique POs from both
         all_pos: list[str] = []
         for po in [result_a.po_primary, result_b.po_primary,
                     result_a.po_secondary, result_b.po_secondary]:
@@ -178,7 +184,6 @@ def reconcile(
         decided_po_numbers = list(dict.fromkeys(
             result_a.po_numbers + result_b.po_numbers
         ))
-        # If po_numbers were empty, fall back to all_pos
         if not decided_po_numbers:
             decided_po_numbers = all_pos
 
@@ -192,8 +197,7 @@ def reconcile(
         )
 
     elif set_intersects:
-        # Partial intersection but primary doesn't match
-        # Still OK but with review recommendation
+        # PARTIAL MATCH — some POs overlap but sets are not identical
         decided_primary = result_a.po_primary or result_b.po_primary
         decided_secondary = result_a.po_secondary or result_b.po_secondary
         decided_po_numbers = list(dict.fromkeys(
@@ -203,12 +207,13 @@ def reconcile(
             decided_po_numbers = [p for p in [decided_primary, decided_secondary] if p]
 
         return ReconcileResult(
-            match_status=MatchStatus.MATCH_OK,
+            match_status=MatchStatus.NEEDS_REVIEW,
             decided_po_primary=decided_primary,
             decided_po_secondary=decided_secondary,
             decided_po_numbers=decided_po_numbers,
-            status=FinalStatus.OK,
-            next_action=NextAction.AUTO_OK,
+            status=FinalStatus.NOT_OK,
+            next_action=NextAction.SEND_TO_REVIEW,
+            reject_reason="Partial PO match — pipelines agree on some POs but not all",
         )
 
     else:
