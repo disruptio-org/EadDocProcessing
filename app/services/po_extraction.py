@@ -141,28 +141,30 @@ _NORMALIZED_KEYWORDS.sort(key=lambda x: len(x[0]), reverse=True)
 # ---------------------------------------------------------------------------
 
 # Each tuple: (pattern, description)
-# NOTE: We use (?<!\d) and (?!\d) instead of \b because \b fails when
+# NOTE: We use (?<![A-Za-z\d]) and (?!\d) instead of \b because \b fails when
 # digits are directly adjacent to letters (e.g., "53681855Numéro") — both
 # digits and letters are \w, so \b doesn't fire between them.
+# The lookbehind also rejects letters to avoid matching article/product codes
+# like "R56481001" where a letter prefix is stripped.
 PO_PATTERNS: list[tuple[re.Pattern, str]] = [
     # (1) Starts with 5 + 7 digits = 8 digits total
-    (re.compile(r"(?<!\d)5\d{7}(?!\d)"), "5XXXXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])5\d{7}(?!\d)"), "5XXXXXXX"),
     # (2) Starts with 8 + 7 digits = 8 digits total
-    (re.compile(r"(?<!\d)8\d{7}(?!\d)"), "8XXXXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])8\d{7}(?!\d)"), "8XXXXXXX"),
     # (8) Starts with 2 + 7 digits = 8 digits total
-    (re.compile(r"(?<!\d)2\d{7}(?!\d)"), "2XXXXXXX (8-digit)"),
+    (re.compile(r"(?<![A-Za-z\d])2\d{7}(?!\d)"), "2XXXXXXX (8-digit)"),
     # (9) Starts with 0 + 7 digits = 8 digits total
-    (re.compile(r"(?<!\d)0\d{7}(?!\d)"), "0XXXXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])0\d{7}(?!\d)"), "0XXXXXXX"),
     # (5) Starts with 00 + 6 digits = 8 digits total
-    (re.compile(r"(?<!\d)00\d{6}(?!\d)"), "00XXXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])00\d{6}(?!\d)"), "00XXXXXX"),
     # (6) Starts with 000 + 5 digits = 8 digits total
-    (re.compile(r"(?<!\d)000\d{5}(?!\d)"), "000XXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])000\d{5}(?!\d)"), "000XXXXX"),
     # (7) Starts with 0000 + 4 digits = 8 digits total
-    (re.compile(r"(?<!\d)0000\d{4}(?!\d)"), "0000XXXX"),
+    (re.compile(r"(?<![A-Za-z\d])0000\d{4}(?!\d)"), "0000XXXX"),
     # (4) Starts with 4 + 3-7 digits
-    (re.compile(r"(?<!\d)4\d{3,7}(?!\d)"), "4XXX-4XXXXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])4\d{3,7}(?!\d)"), "4XXX-4XXXXXXX"),
     # (3) Starts with 2 + 4-5 digits
-    (re.compile(r"(?<!\d)2\d{4,5}(?!\d)"), "2XXXX-2XXXXX"),
+    (re.compile(r"(?<![A-Za-z\d])2\d{4,5}(?!\d)"), "2XXXX-2XXXXX"),
 ]
 
 # ---------------------------------------------------------------------------
