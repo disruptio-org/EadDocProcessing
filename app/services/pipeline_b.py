@@ -80,7 +80,7 @@ def run_pipeline_b(
     # Step 2: decide if regex is strong enough
     if regex_result.po_primary and regex_result.confidence >= REGEX_STRONG_THRESHOLD:
         logger.info("pipeline_b_regex_strong", msg="Skipping LLM, regex result is confident")
-        return regex_result
+        return filter_result_by_supplier(regex_result, pages_text)
 
     # Step 3: fallback to LLM with conservative prompt
     logger.info("pipeline_b_llm_fallback", msg="Regex insufficient, calling LLM")
@@ -122,7 +122,7 @@ def run_pipeline_b(
         merged_po_numbers = list(dict.fromkeys(
             regex_result.po_numbers + llm_result.po_numbers
         ))
-        return PipelineResult(
+        return filter_result_by_supplier(PipelineResult(
             po_primary=regex_result.po_primary,
             po_secondary=regex_result.po_secondary,
             po_numbers=merged_po_numbers,
@@ -133,7 +133,7 @@ def run_pipeline_b(
                 dict.fromkeys(regex_result.found_keywords + llm_result.found_keywords)
             ),
             evidence=regex_result.evidence + llm_result.evidence,
-        )
+        ), pages_text)
 
     if llm_result.po_primary:
         # If both found something, prefer LLM but mark as hybrid
