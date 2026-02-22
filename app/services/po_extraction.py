@@ -382,23 +382,59 @@ def filter_result_by_supplier(
     result: PipelineResult,
     pages_text: list,
 ) -> PipelineResult:
-    """Apply supplier-specific minimum PO length filtering to a PipelineResult.
+    """Apply post-processing filters to a PipelineResult.
+
+    1. Supplier-specific minimum PO length filtering.
+    2. Negative-context filtering: remove PO candidates that appear next to
+       labels like "Cliente:", "Client:", "Customer:", etc. in the document text.
 
     Call this from any pipeline (A, B, or hybrid) after extraction.
     pages_text can be list of PageText objects or (page_num, text) tuples.
     """
     full_text = " ".join(
         (p.text if hasattr(p, "text") else p[1]) for p in pages_text
-    ).upper()
-    min_len = _get_supplier_min_po_length(full_text)
-    if min_len <= 0:
-        return result
+    )
 
-    def _ok(po: str | None) -> bool:
-        return po is not None and len(po) >= min_len
+    # --- Filter 1: supplier-specific minimum PO length ---
+    full_text_upper = full_text.upper()
+    min_len = _get_supplier_min_po_length(full_text_upper)
+    if min_len > 0:
+        result.po_numbers = [po for po in result.po_numbers
+                             if po is not None and len(po) >= min_len]
 
-    filtered_numbers = [po for po in result.po_numbers if _ok(po)]
-    result.po_numbers = filtered_numbers
-    result.po_primary = filtered_numbers[0] if len(filtered_numbers) >= 1 else None
-    result.po_secondary = filtered_numbers[1] if len(filtered_numbers) >= 2 else None
+    # --- Filter 2: remove POs appearing in negative contexts ---
+    negative_numbers = _extract_negative_context_numbers(full_text)
+    if negative_numbers and result.po_numbers:
+        before = len(result.po_numbers)
+        result.po_numbers = [
+            po for po in result.po_numbers
+            if normalize_po(po) not in negative_numbers
+        ]
+        if len(result.po_numbers) < before:
+            logger.info(
+                "negative_context_filter_applied",
+                removed=before - len(result.po_numbers),
+                negative_numbers=list(negative_numbers),
+            )
+
+    # Rebuild primary/secondary from filtered list
+    result.po_primary = result.po_numbers[0] if len(result.po_numbers) >= 1 else None
+    result.po_secondary = result.po_numbers[1] if len(result.po_numbers) >= 2 else None
     return result
+
+
+# Regex to find digit sequences in text (for scanning negative contexts)
+_DIGIT_SEQ = re.compile(r"\d{4,}")
+
+
+def _extract_negative_context_numbers(full_text: str) -> set[str]:
+    """Scan the document text and return normalized numbers that appear in
+    negative contexts (e.g. preceded by 'Cliente:', 'Client:', etc.).
+    """
+    bad_numbers: set[str] = set()
+    for m in _DIGIT_SEQ.finditer(full_text):
+        if _is_negative_context(full_text, m.start()):
+            normalized = normalize_po(m.group())
+            if normalized:
+                bad_numbers.add(normalized)
+    return bad_numbers
