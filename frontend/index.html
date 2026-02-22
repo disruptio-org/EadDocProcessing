@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocProcessing — Disruptio</title>
+  <meta name="description"
+    content="Processamento inteligente de documentos PDF com extração automática de POs e reconciliação.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="container">
+      <div class="header-brand">
+        <div class="header-brand-mark">DISRUPTIO<span>.</span></div>
+        <div class="header-brand-sub">DocProcessing</div>
+      </div>
+      <nav class="header-nav">
+        <div class="header-status" id="apiStatus">
+          <div class="header-status-dot"></div>
+          <span>API Online</span>
+        </div>
+        <button class="btn btn-primary btn-small" id="btnNewUpload" style="display:none;">
+          Novo Upload
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===== VIEW: UPLOAD ===== -->
+    <div id="viewUpload" class="view active">
+
+      <!-- Hero -->
+      <section class="hero">
+        <div class="container">
+          <div class="hero-grid">
+            <div class="hero-content">
+              <p class="section-label">PROCESSAMENTO DE DOCUMENTOS</p>
+              <h1 class="hero-headline">
+                MENOS MANUAL.<br>
+                MAIS CONTROLO.<br>
+                MAIS <span class="accent">VELOCIDADE.</span>
+              </h1>
+              <p class="hero-subcopy">
+                Upload do batch PDF. Extração automática de POs, reconciliação e indexação — sem intervenção manual.
+              </p>
+              <div class="hero-actions">
+                <button class="btn btn-primary" id="btnHeroUpload">
+                  Carregar PDF
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v12M2 8l6-6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <button class="btn btn-secondary" id="btnHowItWorks">Como Funciona</button>
+              </div>
+            </div>
+            <div class="hero-visual">
+              <!-- Diagrammatic SVG illustration -->
+              <svg class="hero-diagram" viewBox="0 0 400 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- PDF stack (left) -->
+                <rect x="40" y="60" width="100" height="130" rx="4" stroke="#D8DBDF" stroke-width="1.5" />
+                <rect x="50" y="50" width="100" height="130" rx="4" stroke="#D8DBDF" stroke-width="1.5"
+                  fill="#F7F7F5" />
+                <rect x="60" y="40" width="100" height="130" rx="4" stroke="#9AA0A6" stroke-width="1.5"
+                  fill="#EFEFEC" />
+                <!-- Lines on top doc -->
+                <line x1="72" y1="58" x2="148" y2="58" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="70" x2="148" y2="70" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="82" x2="130" y2="82" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="100" x2="148" y2="100" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="112" x2="140" y2="112" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="124" x2="148" y2="124" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="136" x2="120" y2="136" stroke="#D8DBDF" stroke-width="1.5" />
+                <line x1="72" y1="148" x2="148" y2="148" stroke="#D8DBDF" stroke-width="1.5" />
+                <!-- Arrow -->
+                <path d="M180 105 L230 105" stroke="#9AA0A6" stroke-width="1.5" stroke-dasharray="4 4" />
+                <path d="M225 100 L235 105 L225 110" stroke="#9AA0A6" stroke-width="1.5" fill="none" />
+                <!-- Engine box -->
+                <rect x="240" y="75" width="60" height="60" rx="8" stroke="#D73A3A" stroke-width="1.5" fill="none" />
+                <circle cx="270" cy="105" r="14" stroke="#D73A3A" stroke-width="1.5" fill="none" />
+                <path d="M264 105 L270 99 L276 105 L270 111 Z" stroke="#D73A3A" stroke-width="1" fill="none" />
+                <!-- Arrow out -->
+                <path d="M310 105 L340 85" stroke="#9AA0A6" stroke-width="1.5" />
+                <path d="M310 105 L340 105" stroke="#9AA0A6" stroke-width="1.5" />
+                <path d="M310 105 L340 125" stroke="#9AA0A6" stroke-width="1.5" />
+                <!-- Output docs -->
+                <rect x="340" y="70" width="40" height="30" rx="3" stroke="#1F9D55" stroke-width="1.5" fill="none" />
+                <rect x="340" y="90" width="40" height="30" rx="3" stroke="#1F9D55" stroke-width="1.5" fill="none" />
+                <rect x="340" y="110" width="40" height="30" rx="3" stroke="#1F9D55" stroke-width="1.5" fill="none" />
+                <!-- Labels -->
+                <text x="90" y="198" text-anchor="middle" fill="#9AA0A6" font-size="11" font-family="Inter"
+                  font-weight="500">BATCH PDF</text>
+                <text x="270" y="158" text-anchor="middle" fill="#D73A3A" font-size="11" font-family="Inter"
+                  font-weight="600">PROCESSING</text>
+                <text x="360" y="163" text-anchor="middle" fill="#1F9D55" font-size="11" font-family="Inter"
+                  font-weight="500">INDEXED</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Upload Card -->
+      <section class="upload-section">
+        <div class="container">
+          <div class="upload-card" id="uploadCard">
+            <div class="drop-zone" id="dropZone">
+              <svg class="drop-zone-icon" viewBox="0 0 48 48" fill="none">
+                <rect x="8" y="6" width="32" height="36" rx="3" stroke="currentColor" stroke-width="1.5" />
+                <path d="M16 18h16M16 24h16M16 30h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                <circle cx="36" cy="36" r="10" fill="#F7F7F5" stroke="currentColor" stroke-width="1.5" />
+                <path d="M36 31v10M31 36h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+              <p class="drop-zone-title">Arraste o PDF para aqui</p>
+              <p class="drop-zone-sub">ou <a href="#" id="btnBrowse">selecione um ficheiro</a></p>
+              <input type="file" id="fileInput" accept=".pdf" class="sr-only">
+            </div>
+
+            <div class="file-preview" id="filePreview">
+              <svg class="file-preview-icon" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.5" />
+                <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+              <div class="file-preview-info">
+                <div class="file-preview-name" id="fileName">—</div>
+                <div class="file-preview-size" id="fileSize">—</div>
+              </div>
+              <button class="file-preview-remove" id="btnRemoveFile" title="Remover ficheiro">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div style="text-align:center; margin-top: var(--sp-md);">
+              <button class="btn btn-primary" id="btnStartProcess" disabled>
+                Iniciar Processamento
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+
+    <!-- ===== VIEW: PROCESSING ===== -->
+    <div id="viewProcessing" class="view">
+      <section class="processing-section">
+        <div class="container">
+          <p class="section-label">PROCESSAMENTO EM CURSO</p>
+          <h2 class="h2" style="margin-bottom: var(--sp-xs);">
+            A processar o seu documento.
+          </h2>
+          <p class="body-text" style="margin-bottom: var(--sp-xl); max-width: 480px;">
+            Cada etapa é executada sequencialmente. Este processo demora normalmente entre 30 segundos e 2 minutos.
+          </p>
+
+          <div class="stage-list" id="stageList">
+            <div class="stage-item" data-stage="uploading" data-status="done">
+              <div class="stage-number">01</div>
+              <div class="stage-content">
+                <div class="stage-name">Upload concluído</div>
+                <div class="stage-detail" id="stageUploadDetail">—</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="extracting" data-status="pending">
+              <div class="stage-number">02</div>
+              <div class="stage-content">
+                <div class="stage-name">Extração de texto</div>
+                <div class="stage-detail">A extrair texto de cada página do PDF</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="boundaries" data-status="pending">
+              <div class="stage-number">03</div>
+              <div class="stage-content">
+                <div class="stage-name">Detecção de limites</div>
+                <div class="stage-detail">A identificar onde cada documento começa e termina</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="pipeline_a" data-status="pending">
+              <div class="stage-number">04</div>
+              <div class="stage-content">
+                <div class="stage-name">Pipeline A — Extração LLM</div>
+                <div class="stage-detail">Análise com modelo de linguagem</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="pipeline_b" data-status="pending">
+              <div class="stage-number">05</div>
+              <div class="stage-content">
+                <div class="stage-name">Pipeline B — Extração Regex</div>
+                <div class="stage-detail">Extração com padrões e heurísticas</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="reconciling" data-status="pending">
+              <div class="stage-number">06</div>
+              <div class="stage-content">
+                <div class="stage-name">Reconciliação</div>
+                <div class="stage-detail">A comparar resultados dos dois pipelines</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="splitting" data-status="pending">
+              <div class="stage-number">07</div>
+              <div class="stage-content">
+                <div class="stage-name">Splitting do PDF</div>
+                <div class="stage-detail">A separar documentos individuais</div>
+              </div>
+            </div>
+
+            <div class="stage-item" data-stage="indexing" data-status="pending">
+              <div class="stage-number">08</div>
+              <div class="stage-content">
+                <div class="stage-name">Geração do índice</div>
+                <div class="stage-detail">A criar o ficheiro Excel de indexação</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+
+    <!-- ===== VIEW: RESULTS ===== -->
+    <div id="viewResults" class="view">
+      <section class="results-section">
+        <div class="container">
+          <p class="section-label">RESULTADOS</p>
+          <h2 class="h2" style="margin-bottom: var(--sp-xs);">
+            Processamento concluído.
+          </h2>
+          <p class="body-text" style="margin-bottom: var(--sp-xl);">
+            Reveja os documentos extraídos e resolva eventuais exceções.
+          </p>
+
+          <!-- Summary Cards -->
+          <div class="summary-grid" id="summaryGrid">
+            <div class="summary-card">
+              <div class="summary-card-label">Total Documentos</div>
+              <div class="summary-card-value" id="sumTotal">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-label">Match OK</div>
+              <div class="summary-card-value" id="sumOk">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-label">Needs Review</div>
+              <div class="summary-card-value accent" id="sumReview">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-label">Mismatch</div>
+              <div class="summary-card-value accent" id="sumMismatch">—</div>
+            </div>
+          </div>
+
+          <!-- Alert Banner -->
+          <div class="alert-banner alert-banner-warning" id="alertBanner">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+              <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            <span id="alertText">—</span>
+          </div>
+
+          <!-- Table Toolbar -->
+          <div class="table-toolbar">
+            <div class="table-toolbar-left">
+              <label class="toggle" id="toggleExceptions">
+                <input type="checkbox" id="chkExceptions">
+                <div class="toggle-track"></div>
+                <span>Mostrar apenas exceções</span>
+              </label>
+            </div>
+            <div class="table-toolbar-right">
+              <button class="btn btn-secondary btn-small" id="btnDownloadExcel">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1v9M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <path d="M1 11v2h12v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                Excel
+              </button>
+              <button class="btn btn-secondary btn-small" id="btnDownloadPdfs">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1v9M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <path d="M1 11v2h12v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                PDFs
+              </button>
+            </div>
+          </div>
+
+          <!-- Data Table -->
+          <div class="data-table-wrapper">
+            <table class="data-table" id="resultsTable">
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort="id">#</th>
+                  <th class="sortable" data-sort="doc_id">Identificador</th>
+                  <th class="sortable" data-sort="pages">Páginas</th>
+                  <th class="sortable" data-sort="decided_po">PO Decidido</th>
+                  <th>PO A</th>
+                  <th>PO B</th>
+                  <th class="num">Conf. A</th>
+                  <th class="num">Conf. B</th>
+                  <th class="sortable" data-sort="match">Status</th>
+                  <th class="sortable" data-sort="final">Decisão</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+
+  <!-- ===== PDF PREVIEW PANEL ===== -->
+  <div class="pdf-preview-panel" id="pdfPreviewPanel">
+    <div class="pdf-preview-header">
+      <span class="pdf-preview-title" id="pdfPreviewTitle">Documento</span>
+    </div>
+    <div class="pdf-preview-body">
+      <iframe id="pdfPreviewFrame" class="pdf-preview-frame"></iframe>
+    </div>
+  </div>
+
+
+  <!-- ===== DETAIL DRAWER ===== -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h3 class="drawer-title" id="drawerTitle">Documento #—</h3>
+      <button class="drawer-close" id="drawerClose" title="Fechar">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M4 4l10 10M14 4l-10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+
+      <!-- Overview -->
+      <div class="drawer-section">
+        <div class="drawer-section-label">Informação Geral</div>
+        <div class="info-rows" id="drawerInfo">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Pipeline Comparison -->
+      <div class="drawer-section">
+        <div class="drawer-section-label">Comparação de Pipelines</div>
+        <div class="pipeline-grid">
+          <div class="pipeline-col" id="drawerPipeA">
+            <div class="pipeline-col-title">Pipeline A — LLM</div>
+            <!-- Populated by JS -->
+          </div>
+          <div class="pipeline-col" id="drawerPipeB">
+            <div class="pipeline-col-title">Pipeline B — Regex</div>
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Evidence -->
+      <div class="drawer-section" id="drawerEvidenceSection">
+        <div class="drawer-section-label">Evidência</div>
+        <div id="drawerEvidence">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>
