@@ -15,6 +15,7 @@ from typing import Optional
 import structlog
 
 from app.schemas.common import Evidence, PipelineMethod, PipelineResult
+from app.reconcile.po_normalizer import normalize_po
 
 logger = structlog.get_logger(__name__)
 
