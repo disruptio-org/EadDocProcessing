@@ -154,4 +154,4 @@ def run_pipeline_b(
         confidence=llm_result.confidence,
         method=llm_result.method,
     )
-    return filter_result_by_supplier(llm_result, pages)
+    return filter_result_by_supplier(llm_result, pages_text)

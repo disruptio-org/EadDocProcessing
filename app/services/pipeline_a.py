@@ -97,4 +97,4 @@ def run_pipeline_a(
         po_primary=result.po_primary,
         confidence=result.confidence,
     )
-    return filter_result_by_supplier(result, pages)
+    return filter_result_by_supplier(result, pages_text)
