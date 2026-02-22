@@ -319,6 +319,23 @@ def extract_po_regex(
         all_keywords.extend(kws)
         all_evidence.extend(evs)
 
+    # Supplier-aware minimum PO length filtering
+    # Some suppliers (e.g. INDUSTRIAS TAYG S.L.) use 8+ digit POs only.
+    # Short numbers (5-6 digits) matched by broad patterns are false positives.
+    full_text = " ".join(text for _, text in pages_text).upper()
+    min_po_length = _get_supplier_min_po_length(full_text)
+    if min_po_length > 0:
+        before_count = len(all_pos)
+        all_pos = [po for po in all_pos if len(po) >= min_po_length]
+        all_evidence = [e for e in all_evidence
+                        if any(po in e.snippet for po in all_pos)] if all_pos else []
+        if len(all_pos) < before_count:
+            logger.info(
+                "po_filter_applied",
+                min_length=min_po_length,
+                removed=before_count - len(all_pos),
+            )
+
     # Deduplicate
     all_keywords = list(dict.fromkeys(all_keywords))
 
@@ -340,3 +357,22 @@ def extract_po_regex(
         found_keywords=all_keywords,
         evidence=all_evidence,
     )
+
+
+# ---------------------------------------------------------------------------
+# SUPPLIER-SPECIFIC PO LENGTH RULES
+# ---------------------------------------------------------------------------
+# Maps supplier text markers (uppercase) to minimum PO digit length.
+# Add entries here for any supplier that requires longer PO numbers.
+
+_SUPPLIER_MIN_PO_LENGTH: list[tuple[str, int]] = [
+    ("INDUSTRIAS TAYG", 8),
+]
+
+
+def _get_supplier_min_po_length(full_text_upper: str) -> int:
+    """Return the minimum PO length if a known supplier is detected, else 0."""
+    for marker, min_len in _SUPPLIER_MIN_PO_LENGTH:
+        if marker in full_text_upper:
+            return min_len
+    return 0
